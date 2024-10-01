@@ -1,4 +1,20 @@
+//Registros del sensor
+const INA226_CONFIGURATION = 0x00
+const INA226_SHUNT_VOLTAGE = 0x01
+const INA226_BUS_VOLTAGE = 0x02
+const INA226_POWER = 0x03
+const INA226_CURRENT = 0x04
+const INA226_CALIBRATION = 0x05
+const INA226_MASK_ENABLE = 0x06
+const INA226_ALERT_LIMIT = 0x07
+const INA226_MANUFACTURER = 0xFE
+const INA226_DIE_ID = 0xFF
+
+//Mascaras 
+
 namespace grovein226 {
+
+  
   export function createINA(): INA226
     {
         let ina = new INA226();
@@ -23,9 +39,9 @@ namespace grovein226 {
   
       init(): boolean {
         // Intentamos realizar alguna operación básica como leer el ID del fabricante
-        let manufacterID = this.readRegister(0xFE); // Leer el registro del ID del fabricante
+        let manufacterID = this.readRegister(INA226_MANUFACTURER); // Leer el registro del ID del fabricante
 
-        if (manufacterID == 0x5449){
+        if (manufacterID == 0x5449){ //0x5449 valor que retorna la identificación del fabricante en la dirección 0xFE
           //Si el ID es correcto se retorna un true y la inicialización es exitosa
           return true;
         } else{
@@ -34,7 +50,7 @@ namespace grovein226 {
         }
       }
 
-      private readRegister(reg: number): number{
+      readRegister(reg: number): number{
           pins.i2cWriteNumber(this.address, reg, NumberFormat.UInt8BR);//se comunica a la direccion i2c y se especifica que el registro es en formato unsigned 8-bit con codificación BE
           let buffer = pins.i2cReadBuffer(this.address, 2); //en esta linea lee los datos del dispositivo, el 2 corresponde a los dos bytes que es el tamaño del registro del INA226
           return (buffer[0] << 8) | buffer[1]; //retorna el registro, para ello se hace un corrimiento y un OR para leer los 16 bits del registro
@@ -57,43 +73,43 @@ namespace grovein226 {
       }
     
       setModeShuntBusContinuous(): boolean {
-          let config = this.readRegister(0x00); // Leer el registro de configuración
+          let config = this.readRegister(INA226_CONFIGURATION); // Leer el registro de configuración
           config &= ~(0x07); // Limpiar los bits del modo
           config |= 0x07; // Establecer el modo "Shunt and Bus continuous"
-          return this.writeRegister(0x00, config); // Escribir el nuevo valor en el registro
+          return this.writeRegister(INA226_CONFIGURATION, config); // Escribir el nuevo valor en el registro
       }
 
       setAverage(average: number): boolean {
-          let config = this.readRegister(0x00); // Leer el registro de configuración
+          let config = this.readRegister(INA226_CONFIGURATION); // Leer el registro de configuración
           config &= ~(0x0E00); // Limpiar los bits del promedio
           config |= (average << 9); // Establecer el valor del promedio (ajustar el shift según la tabla de bits del INA226)
-          return this.writeRegister(0x00, config); // Escribir el nuevo valor en el registro
+          return this.writeRegister(INA226_CONFIGURATION, config); // Escribir el nuevo valor en el registro
       }
 
       setBusVoltageConversionTime(time: number): boolean {
-          let config = this.readRegister(0x00); // Leer el registro de configuración
+          let config = this.readRegister(INA226_CONFIGURATION); // Leer el registro de configuración
           config &= ~(0x01C0); // Limpiar los bits del tiempo de conversión del bus
           config |= (time << 6); // Establecer el tiempo de conversión (según la tabla de tiempos)
-          return this.writeRegister(0x00, config); // Escribir el nuevo valor en el registro
+          return this.writeRegister(INA226_CONFIGURATION, config); // Escribir el nuevo valor en el registro
       }
 
       setShuntVoltageConversionTime(time: number): boolean {
-          let config = this.readRegister(0x00); // Leer el registro de configuración
+          let config = this.readRegister(INA226_CONFIGURATION); // Leer el registro de configuración
           config &= ~(0x0038); // Limpiar los bits del tiempo de conversión del shunt
           config |= (time << 3); // Establecer el tiempo de conversión (según la tabla de tiempos)
-          return this.writeRegister(0x00, config); // Escribir el nuevo valor en el registro
+          return this.writeRegister(INA226_CONFIGURATION, config); // Escribir el nuevo valor en el registro
       }
 
     
       readvoltage(){
-          let rawVoltage = this.readRegister(0x02); // Leer el registro de voltaje
+          let rawVoltage = this.readRegister(INA226_BUS_VOLTAGE); // Leer el registro de voltaje
           // Convertir el valor crudo a voltios
           let voltage = rawVoltage * this.shunt; // Ajusta esto según la fórmula correcta para el INA226
           return voltage;
       }
   
       readCurrent(){
-          let rawCurrent = this.readRegister(0x04); // Leer el registro de corriente
+          let rawCurrent = this.readRegister(INA226_CURRENT); // Leer el registro de corriente
           // Convertir el valor crudo a amperios
           let current = rawCurrent * this.currentLSB; // Ajusta esto según la relación que tienes para currentLSB
           return current;
